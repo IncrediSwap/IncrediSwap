@@ -8,12 +8,20 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aztec/sdk": "^2.0.102",
+    "copy-webpack-plugin": "^9.0.1",
     "next": "12.0.2",
     "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react-dom": "17.0.2",
+    "web3": "^1.6.0"
   },
   "devDependencies": {
     "eslint": "7.32.0",
     "eslint-config-next": "12.0.2"
+  },
+  "browser": {
+    "fs": true,
+    "path": false,
+    "os": false
   }
 }

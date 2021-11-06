@@ -108,6 +108,13 @@
   margin-left: 0.5rem;
 }
 
+.button{
+  margin-top: 2rem;
+  font-size:16px;
+  border-radius: 8px;
+  background-color:cornflowerblue
+}
+
 @media (max-width: 600px) {
   .grid {
     width: 100%;
