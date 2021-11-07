@@ -24,7 +24,7 @@ export default function SwapComponent() {
         setStatus(status.initState.toString())
     }
 
-    const swap = (inputAssetId, outputAssetIdA) => {
+    const swap = async (inputAssetId, outputAssetIdA) => {
         setSwapStatus(true)
         const outputAssetIdB = 0;
 
