@@ -10,6 +10,7 @@ import Web3 from 'web3';
 export default function Home() {
 
   const [aztecComponent, setAztecComponent] = useState(true);
+  const [connectedAccount, setConnectedAccount] = useState('');
 
   useEffect(async () => {
     BlockchainUtils.metamaskRefresh();
@@ -19,11 +20,13 @@ export default function Home() {
     const network = await BlockchainUtils.getNetworkType(web3);
     if (accounts.length === 0) {
       Web3.givenProvider.enable();
+    } else {
+      setConnectedAccount(accounts[0])
+      if (network !== 'goerli') {
+        alert('Please switch to goerli testnet network.')
+      }
     }
-    if (network !== 'goerli') {
-      alert('Please switch to goerli testnet network.')
-    }
-  });
+  }), [connectedAccount];
 
   const switchPage = () => {
     setAztecComponent(current => !current)
@@ -38,8 +41,16 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      <header>
+        <div>
+          <p className={styles.title}>Welcome to the Aztec rollup swap on Uniswap v3</p>
+        </div>
+      </header>
       <main className={styles.main}>
-        {aztecComponent ? <AztecComponent /> : <SwapComponent />}
+        <div className={styles.card}>
+          {aztecComponent ? <AztecComponent account={connectedAccount} /> : <SwapComponent />}
+        </div>
+
         <button onClick={switchPage} className={styles.button}>Go to {aztecComponent ? "Swap page" : "Aztec Component"}</button>
       </main>
 
