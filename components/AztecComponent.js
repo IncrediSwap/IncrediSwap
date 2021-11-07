@@ -34,19 +34,22 @@ export default function AztecComponent(props) {
 
         let aztecUser = localStorage.getItem('aztecUser');
         let privateKey = localStorage.getItem('aztecPrivKey')
+        let userId
         if (aztecUser === null || aztecUser === undefined) {
             privateKey = randomBytes(32);
             setAztecPrivKey(privateKey)
-            localStorage.setItem('aztecPrivKey', privateKey)
+            localStorage.setItem('aztecPrivKey', `0x${privateKey.toString('hex')}`)
             const user = await aztecSdk.addUser(privateKey);
-            aztecUser = user.id
-            localStorage.setItem('aztecUser', aztecUser)
+            localStorage.setItem('aztecUser', user.id)
+            setUserId(user.id)
+            userId= user.id
         } else {
             setAztecPrivKey(Buffer.from(privateKey, 'hex'))
+            userId = AccountId.fromString(aztecUser)
+            setUserId(userId)
         }
 
-        let userId = AccountId.fromString(aztecUser)
-        setUserId(userId)
+
 
         const balanceDai = aztecSdk.getBalance(AssetId.DAI, userId);
         const balanceETH = aztecSdk.getBalance(AssetId.ETH, userId);
