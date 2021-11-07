@@ -1,5 +1,5 @@
 const {
-    createWalletSdk, AssetId, EthAddress, TxType
+    createWalletSdk, AssetId, EthAddress, TxType, AccountId, GrumpkinAddress
 } = require('@aztec/sdk');
 const { randomBytes } = require('crypto');
 import Web3 from 'web3';
@@ -10,33 +10,46 @@ export default function AztecComponent(props) {
     const rollupProviderUrl = 'https://api.aztec.network/falafel';
 
     const [status, setStatus] = useState('Uninitialized')
+    const [depositStatus, setDepositStatus] = useState(false)
     const [balanceDai, setBalanceDai] = useState('0')
     const [balanceEth, setBalanceEth] = useState('0')
+    const [aztecPrivKey, setAztecPrivKey] = useState(undefined)
     const [balancePendingEth, setBalancePendingEth] = useState('0')
     const [balancePendingDai, setBalancePendingDai] = useState('0')
     const [sdk, setSdk] = useState(undefined)
-    const [aztecPrivKey, setAztecPrivKey] = useState()
     const [userId, setUserId] = useState(undefined)
 
     useEffect(async () => {
-        aztecInitialization();
+        await aztecInitialization();
     }, [props.account]);
 
     const aztecInitialization = async () => {
         const aztecSdk = await createWalletSdk(Web3.givenProvider, rollupProviderUrl);
         setSdk(aztecSdk)
-        const status = 'Initalization in progress'
+        const status = 'Initialization in progress'
         setStatus(status)
         await aztecSdk.init();
         status = aztecSdk.getLocalStatus();
         setStatus(status.initState.toString())
-        const privateKey = randomBytes(32);
-        setAztecPrivKey(privateKey)
-        const user = await aztecSdk.addUser(privateKey);
-        setUserId(user.id)
 
-        const balanceDai = aztecSdk.getBalance(AssetId.DAI, user.id);
-        const balanceETH = aztecSdk.getBalance(AssetId.ETH, user.id);
+        let aztecUser = localStorage.getItem('aztecUser');
+        let privateKey = localStorage.getItem('aztecPrivKey')
+        if (aztecUser === null || aztecUser === undefined) {
+            privateKey = randomBytes(32);
+            setAztecPrivKey(privateKey)
+            localStorage.setItem('aztecPrivKey', privateKey)
+            const user = await aztecSdk.addUser(privateKey);
+            aztecUser = user.id
+            localStorage.setItem('aztecUser', aztecUser)
+        } else {
+            setAztecPrivKey(Buffer.from(privateKey, 'hex'))
+        }
+
+        let userId = AccountId.fromString(aztecUser)
+        setUserId(userId)
+
+        const balanceDai = aztecSdk.getBalance(AssetId.DAI, userId);
+        const balanceETH = aztecSdk.getBalance(AssetId.ETH, userId);
         setBalanceDai(balanceDai.toString())
         setBalanceEth(balanceETH.toString())
 
@@ -52,7 +65,9 @@ export default function AztecComponent(props) {
         }
 
     }
+
     const deposit = async (assetId) => {
+        setDepositStatus(true)
         let value = sdk.toBaseUnits(assetId, '0.002');
         let pendingDepositVar = assetId === AssetId.ETH ? balancePendingEth : balancePendingDai
 
@@ -61,7 +76,7 @@ export default function AztecComponent(props) {
         const depositor = EthAddress.fromString(props.account)
         console.info('>> fee : ', txFee, ' + value : ', value, ' + pending : ', pendingDepositVar)
 
-        const signer = sdk.createSchnorrSigner(aztecPrivKey);
+
         if (AssetId.ETH !== assetId) {
             const allowance = await sdk.getPublicAllowance(assetId, depositor);
             if (allowance < totalDeposit) {
@@ -78,6 +93,7 @@ export default function AztecComponent(props) {
                 await sdk.depositFundsToContract(assetId, depositor, totalDeposit);
             }
         }
+        const signer = sdk.createSchnorrSigner(aztecPrivKey);
         const proofOutput = await sdk.createDepositProof(
             assetId,
             depositor,
@@ -95,6 +111,7 @@ export default function AztecComponent(props) {
 
         const balanceAfter = sdk.getBalance(assetId, userId);
         console.info('balance after deposit', balanceAfter)
+        setDepositStatus(false)
     }
 
     return (
@@ -140,8 +157,9 @@ export default function AztecComponent(props) {
                     {balancePendingDai}
                 </div>
             </div>
-            <button onClick={deposit(AssetId.ETH)}>Deposit ETH</button>
-            <button onClick={deposit(AssetId.DAI)}>Deposit DAI</button>
+            <button onClick={() => deposit(AssetId.ETH)}>Deposit ETH</button>
+            <button onClick={() => deposit(AssetId.DAI)}>Deposit DAI</button>
+            {depositStatus && <p>State of deposit : In progress, please wait ...</p>}
         </div>
     )
 }
