@@ -2,6 +2,7 @@ const {
     createWalletSdk, AssetId, EthAddress, TxType, AccountId, GrumpkinAddress, BridgeId
 } = require('@aztec/sdk');
 import Web3 from 'web3';
+import { useState, useEffect } from 'react';
 
 export default function SwapComponent() {
     const rollupProviderUrl = 'https://api.aztec.network/falafel';
@@ -20,7 +21,7 @@ export default function SwapComponent() {
         setStatus('Initialization in progress')
         const sdk = await createWalletSdk(Web3.givenProvider, rollupProviderUrl);
         setSdk(sdk);
-        status = aztecSdk.getLocalStatus();
+        status = sdk.getLocalStatus();
         setStatus(status.initState.toString())
     }
 
